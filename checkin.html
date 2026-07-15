@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Check-in de Presença</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f4f4f2;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 32px 28px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: #FFE600;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .logo-text {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1a1a1a;
+      line-height: 1.2;
+    }
+
+    .logo-sub {
+      font-size: 11px;
+      color: #888;
+      font-weight: 400;
+    }
+
+    h1 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #444;
+      margin-bottom: 6px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 15px;
+      color: #1a1a1a;
+      margin-bottom: 16px;
+      outline: none;
+      transition: border-color 0.15s;
+      -webkit-appearance: none;
+    }
+
+    input:focus { border-color: #3730b8; }
+
+    input.otp-input {
+      letter-spacing: 10px;
+      font-size: 22px;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      background: #3730b8;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+    }
+
+    button:hover:not(:disabled) { background: #2c279a; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .msg {
+      margin-top: 16px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      line-height: 1.5;
+      display: none;
+    }
+
+    .msg.erro    { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+    .msg.sucesso { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+    .msg.aviso   { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+
+    .step { display: none; }
+    .step.ativo { display: block; }
+
+    .geo-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 20px;
+    }
+
+    .geo-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #d1d5db;
+      flex-shrink: 0;
+    }
+
+    .geo-dot.ok      { background: #22c55e; }
+    .geo-dot.erro    { background: #ef4444; }
+    .geo-dot.loading { background: #f59e0b; }
+
+    .reenviar {
+      text-align: center;
+      margin-top: 12px;
+    }
+
+    .reenviar button {
+      background: none;
+      color: #3730b8;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 0;
+      width: auto;
+      text-decoration: underline;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon">🛒</div>
+    <div>
+      <div class="logo-text">Mercado Livre</div>
+      <div class="logo-sub">BRRJ02 — Check-in de presença</div>
+    </div>
+  </div>
+
+  <!-- STEP 1: email -->
+  <div id="step1" class="step ativo">
+    <h1>Registrar presença</h1>
+    <p class="subtitle">Digite seu e-mail cadastrado para receber o código de confirmação.</p>
+
+    <div id="geo-status" class="geo-status">
+      <div class="geo-dot loading" id="geo-dot"></div>
+      <span id="geo-text">Obtendo sua localização...</span>
+    </div>
+
+    <label for="email">E-mail</label>
+    <input type="email" id="email" placeholder="seu@email.com" autocomplete="email"/>
+
+    <button id="btn-enviar" onclick="enviarOtp()">Enviar código</button>
+    <div id="msg1" class="msg"></div>
+  </div>
+
+  <!-- STEP 2: OTP -->
+  <div id="step2" class="step">
+    <h1>Código de verificação</h1>
+    <p class="subtitle" id="msg-email-enviado">Digite o código de 6 dígitos enviado para o seu e-mail.</p>
+
+    <label for="otp">Código</label>
+    <input type="number" id="otp" class="otp-input" placeholder="000000" maxlength="6" oninput="this.value=this.value.slice(0,6)"/>
+
+    <button id="btn-confirmar" onclick="confirmarOtp()">Confirmar presença</button>
+    <div id="msg2" class="msg"></div>
+
+    <div class="reenviar">
+      <button onclick="voltarStep1()">Usar outro e-mail</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: resultado -->
+  <div id="step3" class="step">
+    <div id="resultado"></div>
+  </div>
+</div>
+
+<script>
+  // ── Configuração ──────────────────────────────────────────
+  const API_URL = 'COLE_AQUI_A_URL_DO_SEU_APPS_SCRIPT_IMPLANTADO';
+  // ─────────────────────────────────────────────────────────
+
+  let token = '';
+  let latCapturada = null;
+  let lngCapturada = null;
+  let emailUsado   = '';
+
+  // Pega token da URL e valida
+  window.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    token = params.get('token') || '';
+
+    if (!token) {
+      bloquear('Link inválido. Escaneie o QR Code correto.');
+      return;
+    }
+
+    fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({ acao: 'validar_link', token })
+    })
+    .then(r => r.json())
+    .then(d => {
+      if (!d.ok) bloquear(d.msg);
+    })
+    .catch(() => bloquear('Erro de conexão. Tente novamente.'));
+
+    // Captura geolocalização
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          latCapturada = pos.coords.latitude;
+          lngCapturada = pos.coords.longitude;
+          document.getElementById('geo-dot').className  = 'geo-dot ok';
+          document.getElementById('geo-text').textContent = 'Localização obtida';
+        },
+        () => {
+          document.getElementById('geo-dot').className  = 'geo-dot erro';
+          document.getElementById('geo-text').textContent = 'Localização não autorizada — será registrado';
+        },
+        { timeout: 10000, enableHighAccuracy: true }
+      );
+    }
+  });
+
+  function enviarOtp() {
+    const email = document.getElementById('email').value.trim();
+    if (!email) { mostrarMsg('msg1', 'Digite seu e-mail.', 'erro'); return; }
+
+    setLoading('btn-enviar', true);
+
+    fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({ acao: 'enviar_otp', email, token })
+    })
+    .then(r => r.json())
+    .then(d => {
+      setLoading('btn-enviar', false);
+      if (d.ok) {
+        emailUsado = email;
+        document.getElementById('msg-email-enviado').textContent =
+          'Código enviado para ' + email + '. Verifique sua caixa de entrada.';
+        irStep(2);
+      } else {
+        mostrarMsg('msg1', d.msg, 'erro');
+      }
+    })
+    .catch(() => {
+      setLoading('btn-enviar', false);
+      mostrarMsg('msg1', 'Erro de conexão. Tente novamente.', 'erro');
+    });
+  }
+
+  function confirmarOtp() {
+    const otp = document.getElementById('otp').value.trim();
+    if (otp.length !== 6) { mostrarMsg('msg2', 'Digite os 6 dígitos do código.', 'erro'); return; }
+
+    setLoading('btn-confirmar', true);
+
+    fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        acao:  'confirmar_otp',
+        email: emailUsado,
+        otp,
+        lat:   latCapturada,
+        lng:   lngCapturada,
+        token,
+      })
+    })
+    .then(r => r.json())
+    .then(d => {
+      setLoading('btn-confirmar', false);
+      if (d.ok) {
+        irStep(3);
+        document.getElementById('resultado').innerHTML = d.suspeito
+          ? `<div class="msg aviso" style="display:block;margin:0;">${d.msg}</div>`
+          : `<div class="msg sucesso" style="display:block;margin:0;">${d.msg}</div>`;
+      } else {
+        mostrarMsg('msg2', d.msg, 'erro');
+      }
+    })
+    .catch(() => {
+      setLoading('btn-confirmar', false);
+      mostrarMsg('msg2', 'Erro de conexão. Tente novamente.', 'erro');
+    });
+  }
+
+  function voltarStep1() { irStep(1); }
+
+  function irStep(n) {
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('ativo'));
+    document.getElementById('step' + n).classList.add('ativo');
+  }
+
+  function bloquear(msg) {
+    document.getElementById('step1').innerHTML =
+      `<div class="msg erro" style="display:block;">${msg}</div>`;
+  }
+
+  function mostrarMsg(id, txt, tipo) {
+    const el = document.getElementById(id);
+    el.textContent = txt;
+    el.className   = 'msg ' + tipo;
+    el.style.display = 'block';
+  }
+
+  function setLoading(btnId, loading) {
+    const btn = document.getElementById(btnId);
+    btn.disabled = loading;
+    btn.innerHTML = loading
+      ? '<span class="spinner"></span>Aguarde...'
+      : btnId === 'btn-enviar' ? 'Enviar código' : 'Confirmar presença';
+  }
+</script>
+</body>
+</html>
