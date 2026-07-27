@@ -24,7 +24,7 @@
       box-shadow: 0 2px 16px rgba(0,0,0,0.08);
     }
     .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; }
-    .logo-icon { width: 36px; height: 36px; background: #FFE600; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .logo-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
     .logo-text { font-size: 14px; font-weight: 600; color: #1a1a1a; line-height: 1.2; }
     .logo-sub { font-size: 11px; color: #888; font-weight: 400; }
     h1 { font-size: 20px; font-weight: 600; color: #1a1a1a; margin-bottom: 6px; }
@@ -65,7 +65,7 @@
 <div id="jsonp-container" style="display:none"></div>
 <div class="card">
   <div class="logo">
-    <div class="logo-icon">🛒</div>
+    <div class="logo-icon"><img src="data:image/png;base64,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" style="width:36px;height:36px;border-radius:8px;"/></div>
     <div>
       <div class="logo-text">Mercado Livre</div>
       <div class="logo-sub">BRRJ02 — Check-in de presença</div>
@@ -107,7 +107,7 @@
 
 <script>
   // ── Cole aqui a URL do seu Apps Script implantado ──
-  const API_URL = 'COLE_AQUI_A_URL_DO_SEU_APPS_SCRIPT_IMPLANTADO';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbw7HWwez-NXKRDBh3GcGEJlrrjGnbKMEYCk-BhM4PRHnoLzhpKcQbcJklVmI0tp67SL/exec';
   // ──────────────────────────────────────────────────
 
   let token = '';
