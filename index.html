@@ -196,25 +196,40 @@
     const otp = document.getElementById('otp').value.trim();
     if (otp.length !== 6) { mostrarMsg('msg2', 'Digite os 6 dígitos do código.', 'erro'); return; }
     setLoading('btn-confirmar', true);
-    chamarAPI({
-      acao:  'confirmar_otp',
-      email: emailUsado,
-      otp,
-      lat:   latCapturada || '',
-      lng:   lngCapturada || '',
-      token,
-      ip:    ipCapturado,
-    }, function(d) {
-      setLoading('btn-confirmar', false);
-      if (d.ok) {
-        irStep(3);
-        document.getElementById('resultado').innerHTML = d.suspeito
-          ? '<div class="msg aviso" style="display:block;margin:0;">' + d.msg + '</div>'
-          : '<div class="msg sucesso" style="display:block;margin:0;">' + d.msg + '</div>';
-      } else {
-        mostrarMsg('msg2', d.msg, 'erro');
-      }
-    });
+
+    // Garante que o IP foi capturado antes de enviar
+    const enviar = () => {
+      chamarAPI({
+        acao:  'confirmar_otp',
+        email: emailUsado,
+        otp,
+        lat:   latCapturada || '',
+        lng:   lngCapturada || '',
+        token,
+        ip:    ipCapturado,
+      }, function(d) {
+        setLoading('btn-confirmar', false);
+        if (d.ok) {
+          irStep(3);
+          document.getElementById('resultado').innerHTML = d.suspeito
+            ? '<div class="msg aviso" style="display:block;margin:0;">' + d.msg + '</div>'
+            : '<div class="msg sucesso" style="display:block;margin:0;">' + d.msg + '</div>';
+        } else {
+          mostrarMsg('msg2', d.msg, 'erro');
+        }
+      });
+    };
+
+    // Se IP ainda não foi capturado, tenta uma vez mais antes de enviar
+    if (ipCapturado === 'N/A') {
+      fetch('https://api.ipify.org?format=json')
+        .then(r => r.json())
+        .then(d => { ipCapturado = d.ip || 'N/A'; })
+        .catch(() => {})
+        .finally(() => enviar());
+    } else {
+      enviar();
+    }
   }
 
   function voltarStep1() { irStep(1); }
