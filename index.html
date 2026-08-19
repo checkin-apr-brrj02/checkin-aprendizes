@@ -192,6 +192,18 @@
     const email = document.getElementById('email').value.trim();
     if (!email) { mostrarMsg('msg1', 'Digite seu e-mail.', 'erro'); return; }
     setLoading('btn-enviar', true);
+
+    // Captura IP enquanto aguarda o código chegar no email
+    fetch('https://api.ipify.org?format=json')
+      .then(r => r.json())
+      .then(d => { ipCapturado = d.ip || 'N/A'; })
+      .catch(() => {
+        fetch('https://api4.my-ip.io/ip.json')
+          .then(r => r.json())
+          .then(d => { ipCapturado = d.ip || d.IP || 'N/A'; })
+          .catch(() => { ipCapturado = 'N/A'; });
+      });
+
     chamarAPI({ acao: 'enviar_otp', email, token }, function(d) {
       setLoading('btn-enviar', false);
       if (d.ok) {
