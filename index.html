@@ -135,12 +135,25 @@
     document.getElementById('jsonp-container').appendChild(script);
   }
 
-  // Captura IP via API pública
+  // Captura IP via múltiplas APIs como fallback
   function capturarIP() {
-    fetch('https://api.ipify.org?format=json')
-      .then(r => r.json())
-      .then(d => { ipCapturado = d.ip || 'N/A'; })
-      .catch(() => { ipCapturado = 'N/A'; });
+    const apis = [
+      'https://api.ipify.org?format=json',
+      'https://api4.my-ip.io/ip.json',
+      'https://api.myip.com'
+    ];
+
+    const tentar = (index) => {
+      if (index >= apis.length) return;
+      fetch(apis[index])
+        .then(r => r.json())
+        .then(d => {
+          ipCapturado = d.ip || d.IP || 'N/A';
+        })
+        .catch(() => tentar(index + 1));
+    };
+
+    tentar(0);
   }
 
   window.addEventListener('DOMContentLoaded', () => {
@@ -222,11 +235,19 @@
 
     // Se IP ainda não foi capturado, tenta uma vez mais antes de enviar
     if (ipCapturado === 'N/A') {
-      fetch('https://api.ipify.org?format=json')
-        .then(r => r.json())
-        .then(d => { ipCapturado = d.ip || 'N/A'; })
-        .catch(() => {})
-        .finally(() => enviar());
+      const apis = [
+        'https://api.ipify.org?format=json',
+        'https://api4.my-ip.io/ip.json',
+        'https://api.myip.com'
+      ];
+      const tentarIP = (index) => {
+        if (index >= apis.length) { enviar(); return; }
+        fetch(apis[index])
+          .then(r => r.json())
+          .then(d => { ipCapturado = d.ip || d.IP || 'N/A'; enviar(); })
+          .catch(() => tentarIP(index + 1));
+      };
+      tentarIP(0);
     } else {
       enviar();
     }
