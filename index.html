@@ -72,7 +72,6 @@
     </div>
   </div>
 
-  <!-- STEP 1: email -->
   <div id="step1" class="step ativo">
     <h1>Registrar presença</h1>
     <p class="subtitle">Digite seu e-mail cadastrado para receber o código de confirmação.</p>
@@ -86,7 +85,6 @@
     <div id="msg1" class="msg"></div>
   </div>
 
-  <!-- STEP 2: OTP -->
   <div id="step2" class="step">
     <h1>Código de verificação</h1>
     <p class="subtitle" id="msg-email-enviado">Digite o código de 6 dígitos enviado para o seu e-mail.</p>
@@ -99,23 +97,20 @@
     </div>
   </div>
 
-  <!-- STEP 3: resultado -->
   <div id="step3" class="step">
     <div id="resultado"></div>
   </div>
 </div>
 
 <script>
-  // ── Cole aqui a URL do seu Apps Script implantado ──
   const API_URL = 'https://script.google.com/macros/s/AKfycbw7HWwez-NXKRDBh3GcGEJlrrjGnbKMEYCk-BhM4PRHnoLzhpKcQbcJklVmI0tp67SL/exec';
-  // ──────────────────────────────────────────────────
 
   let token = '';
   let latCapturada = null;
   let lngCapturada = null;
   let emailUsado   = '';
+  let ipCapturado  = 'N/A';
 
-  // Chamada via JSONP — resolve o bloqueio de CORS do Apps Script
   function chamarAPI(params, callback) {
     const cbName = 'cb_' + Date.now();
     const qs = Object.keys(params)
@@ -140,6 +135,14 @@
     document.getElementById('jsonp-container').appendChild(script);
   }
 
+  // Captura IP via API pública
+  function capturarIP() {
+    fetch('https://api.ipify.org?format=json')
+      .then(r => r.json())
+      .then(d => { ipCapturado = d.ip || 'N/A'; })
+      .catch(() => { ipCapturado = 'N/A'; });
+  }
+
   window.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
     token = params.get('token') || '';
@@ -152,6 +155,8 @@
     chamarAPI({ acao: 'validar_link', token }, function(d) {
       if (!d.ok) bloquear(d.msg);
     });
+
+    capturarIP();
 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -198,6 +203,7 @@
       lat:   latCapturada || '',
       lng:   lngCapturada || '',
       token,
+      ip:    ipCapturado,
     }, function(d) {
       setLoading('btn-confirmar', false);
       if (d.ok) {
