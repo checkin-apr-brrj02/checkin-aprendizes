@@ -135,25 +135,12 @@
     document.getElementById('jsonp-container').appendChild(script);
   }
 
-  // Captura IP via múltiplas APIs como fallback
+  // Captura IP via serviço próprio no Render
   function capturarIP() {
-    const apis = [
-      'https://api.ipify.org?format=json',
-      'https://api4.my-ip.io/ip.json',
-      'https://api.myip.com'
-    ];
-
-    const tentar = (index) => {
-      if (index >= apis.length) return;
-      fetch(apis[index])
-        .then(r => r.json())
-        .then(d => {
-          ipCapturado = d.ip || d.IP || 'N/A';
-        })
-        .catch(() => tentar(index + 1));
-    };
-
-    tentar(0);
+    fetch('https://ip-service-27td.onrender.com')
+      .then(r => r.json())
+      .then(d => { ipCapturado = d.ip || 'N/A'; })
+      .catch(() => { ipCapturado = 'N/A'; });
   }
 
   window.addEventListener('DOMContentLoaded', () => {
@@ -194,15 +181,10 @@
     setLoading('btn-enviar', true);
 
     // Captura IP enquanto aguarda o código chegar no email
-    fetch('https://api.ipify.org?format=json')
+    fetch('https://ip-service-27td.onrender.com')
       .then(r => r.json())
       .then(d => { ipCapturado = d.ip || 'N/A'; })
-      .catch(() => {
-        fetch('https://api4.my-ip.io/ip.json')
-          .then(r => r.json())
-          .then(d => { ipCapturado = d.ip || d.IP || 'N/A'; })
-          .catch(() => { ipCapturado = 'N/A'; });
-      });
+      .catch(() => { ipCapturado = 'N/A'; });
 
     chamarAPI({ acao: 'enviar_otp', email, token }, function(d) {
       setLoading('btn-enviar', false);
@@ -245,21 +227,11 @@
       });
     };
 
-    // Se IP ainda não foi capturado, tenta uma vez mais antes de enviar
     if (ipCapturado === 'N/A') {
-      const apis = [
-        'https://api.ipify.org?format=json',
-        'https://api4.my-ip.io/ip.json',
-        'https://api.myip.com'
-      ];
-      const tentarIP = (index) => {
-        if (index >= apis.length) { enviar(); return; }
-        fetch(apis[index])
-          .then(r => r.json())
-          .then(d => { ipCapturado = d.ip || d.IP || 'N/A'; enviar(); })
-          .catch(() => tentarIP(index + 1));
-      };
-      tentarIP(0);
+      fetch('https://ip-service-27td.onrender.com')
+        .then(r => r.json())
+        .then(d => { ipCapturado = d.ip || 'N/A'; enviar(); })
+        .catch(() => enviar());
     } else {
       enviar();
     }
