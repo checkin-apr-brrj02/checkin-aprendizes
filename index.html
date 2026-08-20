@@ -79,6 +79,7 @@
       <div class="geo-dot loading" id="geo-dot"></div>
       <span id="geo-text">Obtendo sua localização...</span>
     </div>
+    <div id="ip-debug" style="font-size:11px;color:#aaa;margin-bottom:12px;">IP: aguardando...</div>
     <label for="email">E-mail</label>
     <input type="email" id="email" placeholder="seu@email.com" autocomplete="email"/>
     <button id="btn-enviar" onclick="enviarOtp()">Enviar código</button>
@@ -145,10 +146,14 @@
       .then(d => {
         clearTimeout(timeoutId);
         ipCapturado = d.ip || 'N/A';
+        const dbg = document.getElementById('ip-debug');
+        if (dbg) dbg.textContent = 'IP: ' + ipCapturado;
       })
-      .catch(() => {
+      .catch((err) => {
         clearTimeout(timeoutId);
         ipCapturado = 'N/A';
+        const dbg = document.getElementById('ip-debug');
+        if (dbg) dbg.textContent = 'IP: erro (' + (err.name || 'desconhecido') + ')';
       });
   }
 
