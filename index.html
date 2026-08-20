@@ -135,12 +135,21 @@
     document.getElementById('jsonp-container').appendChild(script);
   }
 
-  // Captura IP via serviço próprio no Render
+  // Captura IP via serviço próprio no Render (com timeout maior para cold start)
   function capturarIP() {
-    fetch('https://ip-service-27td.onrender.com')
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
+
+    fetch('https://ip-service-27td.onrender.com', { signal: controller.signal })
       .then(r => r.json())
-      .then(d => { ipCapturado = d.ip || 'N/A'; })
-      .catch(() => { ipCapturado = 'N/A'; });
+      .then(d => {
+        clearTimeout(timeoutId);
+        ipCapturado = d.ip || 'N/A';
+      })
+      .catch(() => {
+        clearTimeout(timeoutId);
+        ipCapturado = 'N/A';
+      });
   }
 
   window.addEventListener('DOMContentLoaded', () => {
@@ -181,10 +190,12 @@
     setLoading('btn-enviar', true);
 
     // Captura IP enquanto aguarda o código chegar no email
-    fetch('https://ip-service-27td.onrender.com')
+    const controller1 = new AbortController();
+    const timeoutId1 = setTimeout(() => controller1.abort(), 60000);
+    fetch('https://ip-service-27td.onrender.com', { signal: controller1.signal })
       .then(r => r.json())
-      .then(d => { ipCapturado = d.ip || 'N/A'; })
-      .catch(() => { ipCapturado = 'N/A'; });
+      .then(d => { clearTimeout(timeoutId1); ipCapturado = d.ip || 'N/A'; })
+      .catch(() => { clearTimeout(timeoutId1); ipCapturado = 'N/A'; });
 
     chamarAPI({ acao: 'enviar_otp', email, token }, function(d) {
       setLoading('btn-enviar', false);
@@ -228,10 +239,12 @@
     };
 
     if (ipCapturado === 'N/A') {
-      fetch('https://ip-service-27td.onrender.com')
+      const controller2 = new AbortController();
+      const timeoutId2 = setTimeout(() => controller2.abort(), 60000);
+      fetch('https://ip-service-27td.onrender.com', { signal: controller2.signal })
         .then(r => r.json())
-        .then(d => { ipCapturado = d.ip || 'N/A'; enviar(); })
-        .catch(() => enviar());
+        .then(d => { clearTimeout(timeoutId2); ipCapturado = d.ip || 'N/A'; enviar(); })
+        .catch(() => { clearTimeout(timeoutId2); enviar(); });
     } else {
       enviar();
     }
