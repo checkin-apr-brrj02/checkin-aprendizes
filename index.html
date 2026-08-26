@@ -189,7 +189,11 @@
     }
   });
 
+  let cooldownAtivo = false;
+
   function enviarOtp() {
+    if (cooldownAtivo) return;
+
     const email = document.getElementById('email').value.trim();
     if (!email) { mostrarMsg('msg1', 'Digite seu e-mail.', 'erro'); return; }
     setLoading('btn-enviar', true);
@@ -203,16 +207,36 @@
       .catch(() => { clearTimeout(timeoutId1); ipCapturado = 'N/A'; });
 
     chamarAPI({ acao: 'enviar_otp', email, token }, function(d) {
-      setLoading('btn-enviar', false);
       if (d.ok) {
         emailUsado = email;
         document.getElementById('msg-email-enviado').textContent =
           'Código enviado para ' + email + '. Verifique sua caixa de entrada.';
         irStep(2);
+        setLoading('btn-enviar', false);
       } else {
+        setLoading('btn-enviar', false);
         mostrarMsg('msg1', d.msg, 'erro');
       }
+      iniciarCooldown();
     });
+  }
+
+  function iniciarCooldown() {
+    cooldownAtivo = true;
+    let segundos = 30;
+    const btn = document.getElementById('btn-enviar');
+    btn.disabled = true;
+
+    const intervalo = setInterval(() => {
+      btn.innerHTML = 'Aguarde ' + segundos + 's';
+      segundos--;
+      if (segundos < 0) {
+        clearInterval(intervalo);
+        cooldownAtivo = false;
+        btn.disabled = false;
+        btn.innerHTML = 'Enviar código';
+      }
+    }, 1000);
   }
 
   function confirmarOtp() {
