@@ -79,7 +79,6 @@
       <div class="geo-dot loading" id="geo-dot"></div>
       <span id="geo-text">Obtendo sua localização...</span>
     </div>
-    <div id="ip-debug" style="font-size:11px;color:#aaa;margin-bottom:12px;">IP: aguardando...</div>
     <label for="email">E-mail</label>
     <input type="email" id="email" placeholder="seu@email.com" autocomplete="email"/>
     <button id="btn-enviar" onclick="enviarOtp()">Enviar código</button>
@@ -104,7 +103,16 @@
 </div>
 
 <script>
-  const API_URL = 'https://script.google.com/macros/s/AKfycbw7HWwez-NXKRDBh3GcGEJlrrjGnbKMEYCk-BhM4PRHnoLzhpKcQbcJklVmI0tp67SL/exec';
+  // ── Múltiplas contas para dividir a carga de envio de OTP ──
+  // A mesma conta escolhida no início da sessão é usada até o fim
+  // (validar_link, enviar_otp e confirmar_otp), pois o token e o OTP
+  // ficam salvos no cache específico de cada conta.
+  const APIs = [
+    'https://script.google.com/macros/s/AKfycbw7HWwez-NXKRDBh3GcGEJlrrjGnbKMEYCk-BhM4PRHnoLzhpKcQbcJklVmI0tp67SL/exec',
+    'https://script.google.com/macros/s/AKfycbxXyMSjO3LnIxVBLiHteWxxqz4lEhAI896TzNsOCrcCJaFIT1WhLcVaCAIN2ybL4elr4Q/exec'
+  ];
+  const API_URL = APIs[Math.floor(Math.random() * APIs.length)];
+  // ────────────────────────────────────────────────────────────
 
   let token = '';
   let latCapturada = null;
@@ -136,7 +144,6 @@
     document.getElementById('jsonp-container').appendChild(script);
   }
 
-  // Captura IP via serviço próprio no Render (com timeout maior para cold start)
   function capturarIP() {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60000);
@@ -146,14 +153,10 @@
       .then(d => {
         clearTimeout(timeoutId);
         ipCapturado = d.ip || 'N/A';
-        const dbg = document.getElementById('ip-debug');
-        if (dbg) dbg.textContent = 'IP: ' + ipCapturado;
       })
-      .catch((err) => {
+      .catch(() => {
         clearTimeout(timeoutId);
         ipCapturado = 'N/A';
-        const dbg = document.getElementById('ip-debug');
-        if (dbg) dbg.textContent = 'IP: erro (' + (err.name || 'desconhecido') + ')';
       });
   }
 
@@ -198,7 +201,6 @@
     if (!email) { mostrarMsg('msg1', 'Digite seu e-mail.', 'erro'); return; }
     setLoading('btn-enviar', true);
 
-    // Captura IP enquanto aguarda o código chegar no email
     const controller1 = new AbortController();
     const timeoutId1 = setTimeout(() => controller1.abort(), 60000);
     fetch('https://ip-service-27td.onrender.com', { signal: controller1.signal })
@@ -244,7 +246,6 @@
     if (otp.length !== 6) { mostrarMsg('msg2', 'Digite os 6 dígitos do código.', 'erro'); return; }
     setLoading('btn-confirmar', true);
 
-    // Garante que o IP foi capturado antes de enviar
     const enviar = () => {
       chamarAPI({
         acao:  'confirmar_otp',
